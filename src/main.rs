@@ -1,5 +1,6 @@
 use std::fs::read_to_string;
 
+// Day #1
 fn main() {
     let lines: Vec<String> = read_lines("./input.txt");
 
