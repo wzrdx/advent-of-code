@@ -3,11 +3,11 @@ name = "day02"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-name = "day02"
-path = "src/main.rs"
-
 [dependencies]
 common = { path = "../common" }
 maplit = "1.0"
 lazy_static = "1.4"
+
+[[bin]]
+name = "day02"
+path = "src/main.rs"
