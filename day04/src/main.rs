@@ -5,7 +5,7 @@ use common::first_and_last;
 
 // Day #4
 fn main() {
-    let lines: Vec<String> = read_lines("./input.txt");
+    let lines: Vec<String> = read_lines("day04/input.txt");
 
     let result: u32 = lines
         .iter()

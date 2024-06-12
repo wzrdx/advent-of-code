@@ -44,7 +44,7 @@ fn main() {
     let result: u32 = lines
         .iter()
         .map(|line| {
-            let (first, last) = first_and_last!(line);
+            let (first, last) = first_and_last!(line, " ");
             get_round_score(first, last)
         })
         .sum();
