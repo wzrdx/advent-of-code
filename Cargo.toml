@@ -12,7 +12,8 @@ common = { path = "./common" }
 itertools = "0.10.0"
 maplit = "1.0"
 lazy_static = "1.4"
+atoi = "2"
 
 [[bin]]
 name = "default"
-path = "day06/src/main.rs"
+path = "day07/src/main.rs"

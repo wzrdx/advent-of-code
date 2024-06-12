@@ -1,71 +1,41 @@
-use itertools::join;
-use std::fs::read_to_string;
+use std::iter::Peekable;
 
-// Day #5
-fn main() {
-    let lines: Vec<String> = read_lines("day05/input.txt");
+// Day #7
+pub fn main() {
+    let bytes = include_bytes!("../input.txt");
+    let mut sum = 0;
 
-    let index = lines
-        .iter()
-        .position(|s| s.starts_with("move"))
-        .unwrap_or_default();
-    let state: Vec<String> = lines[..index - 2].to_vec().into_iter().rev().collect();
+    read(&mut bytes.split(|b| b == &b'\n').peekable(), &mut sum);
+    println!("{}", sum);
+}
 
-    let first_line: String = state
-        .get(0)
-        .map_or_else(|| String::default(), String::clone);
-    let count: usize = (first_line.len() + 1) / 4;
+fn read(lines: &mut Peekable<impl Iterator<Item = &'static [u8]>>, sum: &mut u64) -> u64 {
+    let mut size = 0;
 
-    let mut stacks: Vec<Vec<char>> = vec![Vec::new(); count];
-
-    for line in state.into_iter() {
-        for i in 0..count {
-            let c = line.chars().nth((i * 4) + 1).unwrap_or_default();
-            if c != ' ' {
-                stacks[i].push(c);
+    while let Some(i) = lines.next() {
+        match i {
+            b"$ cd .." => {
+                break;
+            }
+            _ if &i[0..3] == b"$ l" => {
+                size = std::iter::from_fn(|| lines.next_if(|i| i[0] != b'$'))
+                    .filter(|i| i[0] != b'd')
+                    .filter_map(|i| atoi::atoi::<u64>(i.split(|b| b == &b' ').next().unwrap()))
+                    .sum();
+            }
+            _ => {
+                let sum_i = read(lines, sum);
+                size += sum_i
             }
         }
     }
 
-    let moves = lines[index..].to_vec();
-    let substrings_to_remove = ["move ", "from ", "to "];
+    // Prints every dir's size, including the root dir which contains the '/' dir
+    println!("Directory size {:?}", size);
 
-    for line in moves.into_iter() {
-        let line_numbers = substrings_to_remove
-            .iter()
-            .fold(line, |s, &substring| s.replace(substring, ""));
-
-        let mut split_values = line_numbers.split_whitespace();
-
-        let amount: usize = split_values.next().unwrap_or_default().parse().unwrap();
-        let from: usize = split_values.next().unwrap_or_default().parse().unwrap();
-        let to: usize = split_values.next().unwrap_or_default().parse().unwrap();
-
-        // let mut cargo: Vec<char> = stacks[from - 1].iter().rev().take(amount).cloned().collect();
-        let remaining_length: usize = stacks[from - 1].len() - amount;
-        let cargo: Vec<char> = stacks[from - 1].drain(remaining_length..).collect();
-
-        stacks[to - 1].extend(cargo);
+    if size <= 100_000 {
+        *sum += size;
     }
 
-    let result: Vec<char> = stacks
-        .iter()
-        .map(|stack| {
-            let last = stack.clone().pop().unwrap_or_default();
-            last
-        })
-        .collect();
-
-    let message = join(result.iter(), "");
-
-    println!("{:?}", stacks);
-    println!("{:?}", message);
-}
-
-fn read_lines(filename: &str) -> Vec<String> {
-    read_to_string(filename)
-        .unwrap() // Panic on possible file-reading errors
-        .lines() // Split the string into an iterator of string slices
-        .map(String::from) // Make each slice into a string
-        .collect() // Gather them together into a vector
+    size
 }
