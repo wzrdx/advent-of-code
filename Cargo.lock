@@ -7,8 +7,6 @@ name = "advent-of-code"
 version = "0.1.0"
 dependencies = [
  "common",
- "lazy_static",
- "maplit",
 ]
 
 [[package]]
