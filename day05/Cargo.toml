@@ -1,0 +1,11 @@
+[package]
+name = "day05"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+common = { path = "../common" }
+
+[[bin]]
+name = "day05"
+path = "src/main.rs"
