@@ -1,71 +1,66 @@
-use itertools::join;
+use std::collections::{HashSet, VecDeque};
 use std::fs::read_to_string;
 
-// Day #5
-fn main() {
-    let lines: Vec<String> = read_lines("day05/input.txt");
+const COUNT: usize = 14;
 
-    let index = lines
-        .iter()
-        .position(|s| s.starts_with("move"))
-        .unwrap_or_default();
-    let state: Vec<String> = lines[..index - 2].to_vec().into_iter().rev().collect();
+#[derive(Debug)]
+struct Queue {
+    max_length: usize,
+    array: VecDeque<char>,
+}
 
-    let first_line: String = state
-        .get(0)
-        .map_or_else(|| String::default(), String::clone);
-    let count: usize = (first_line.len() + 1) / 4;
+impl Queue {
+    fn new(max_length: usize, load: &[char]) -> Self {
+        let mut array = VecDeque::new();
+        array.extend(load);
 
-    let mut stacks: Vec<Vec<char>> = vec![Vec::new(); count];
+        Self { max_length, array }
+    }
 
-    for line in state.into_iter() {
-        for i in 0..count {
-            let c = line.chars().nth((i * 4) + 1).unwrap_or_default();
-            if c != ' ' {
-                stacks[i].push(c);
+    fn push(&mut self, value: char) {
+        if self.array.len() == self.max_length {
+            self.array.pop_front();
+        }
+
+        self.array.push_back(value);
+    }
+
+    fn are_all_unique(&self) -> bool {
+        let mut seen = HashSet::new();
+
+        for c in &self.array {
+            if !seen.insert(c) {
+                return false;
             }
+        }
+
+        true
+    }
+}
+
+// Day #6
+fn main() {
+    let mut str: String = read_to_string("day06/input.txt").unwrap();
+    let mut load: Vec<char> = Vec::new();
+
+    for _ in 0..(COUNT - 1) {
+        load.push(str.remove(0));
+    }
+
+    let mut queue = Queue::new(COUNT, &load);
+
+    let mut chars = str.chars();
+    let mut processed = load.len();
+
+    while let Some(c) = chars.next() {
+        queue.push(c);
+        processed += 1;
+
+        if queue.are_all_unique() {
+            println!("{:?}, {:?}", processed, &queue);
+            break;
         }
     }
 
-    let moves = lines[index..].to_vec();
-    let substrings_to_remove = ["move ", "from ", "to "];
-
-    for line in moves.into_iter() {
-        let line_numbers = substrings_to_remove
-            .iter()
-            .fold(line, |s, &substring| s.replace(substring, ""));
-
-        let mut split_values = line_numbers.split_whitespace();
-
-        let amount: usize = split_values.next().unwrap_or_default().parse().unwrap();
-        let from: usize = split_values.next().unwrap_or_default().parse().unwrap();
-        let to: usize = split_values.next().unwrap_or_default().parse().unwrap();
-
-        // let mut cargo: Vec<char> = stacks[from - 1].iter().rev().take(amount).cloned().collect();
-        let remaining_length: usize = stacks[from - 1].len() - amount;
-        let cargo: Vec<char> = stacks[from - 1].drain(remaining_length..).collect();
-
-        stacks[to - 1].extend(cargo);
-    }
-
-    let result: Vec<char> = stacks
-        .iter()
-        .map(|stack| {
-            let last = stack.clone().pop().unwrap_or_default();
-            last
-        })
-        .collect();
-
-    let message = join(result.iter(), "");
-
-    println!("{:?}", stacks);
-    println!("{:?}", message);
-}
-
-fn read_lines(filename: &str) -> Vec<String> {
-    read_to_string(filename)
-        .unwrap() // Panic on possible file-reading errors
-        .lines() // Split the string into an iterator of string slices
-        .map(String::from) // Make each slice into a string
-        .collect() // Gather them together into a vector
+    println!("End");
 }
