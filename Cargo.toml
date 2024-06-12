@@ -12,4 +12,4 @@ common = { path = "./common" }
 
 [[bin]]
 name = "default"
-path = "day01/src/main.rs"
+path = "day03/src/main.rs"
