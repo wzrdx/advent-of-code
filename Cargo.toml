@@ -5,8 +5,10 @@ members = ["common", "day01", "day02", "day03"]
 name = "advent-of-code"
 version = "0.1.0"
 edition = "2021"
+resolver = "2"
 
 [dependencies]
+common = { path = "./common" }
 
 [[bin]]
 name = "default"
