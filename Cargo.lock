@@ -7,6 +7,9 @@ name = "advent-of-code"
 version = "0.1.0"
 dependencies = [
  "common",
+ "itertools",
+ "lazy_static",
+ "maplit",
 ]
 
 [[package]]
@@ -41,6 +44,29 @@ name = "day04"
 version = "0.1.0"
 dependencies = [
  "common",
+]
+
+[[package]]
+name = "day05"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "itertools",
+]
+
+[[package]]
+name = "either"
+version = "1.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3dca9240753cf90908d7e4aac30f630662b02aebaa1b58a3cadabdb23385b58b"
+
+[[package]]
+name = "itertools"
+version = "0.10.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
 ]
 
 [[package]]

@@ -1,41 +1,65 @@
+use itertools::join;
 use std::fs::read_to_string;
 
-extern crate common;
-use common::first_and_last;
-
-// Day #4
+// Day #5
 fn main() {
-    let lines: Vec<String> = read_lines("day04/input.txt");
+    let lines: Vec<String> = read_lines("day05/input.txt");
 
-    let result: u32 = lines
+    let index = lines
         .iter()
-        .map(|line: &String| {
-            let (first, second) = first_and_last!(line, ',');
-            let value = get_overlap(first_and_last!(first, '-'), first_and_last!(second, '-'));
+        .position(|s| s.starts_with("move"))
+        .unwrap_or_default();
+    let state: Vec<String> = lines[..index - 2].to_vec().into_iter().rev().collect();
 
-            value
-        })
-        .sum();
+    let first_line: String = state
+        .get(0)
+        .map_or_else(|| String::default(), String::clone);
+    let count: usize = (first_line.len() + 1) / 4;
 
-    println!("{:?}", result);
-}
+    let mut stacks: Vec<Vec<char>> = vec![Vec::new(); count];
 
-fn get_overlap(first: (&str, &str), second: (&str, &str)) -> u32 {
-    let first_n: (u32, u32) = (
-        (first.0).parse::<u32>().unwrap_or_default(),
-        (first.1).parse::<u32>().unwrap_or_default(),
-    );
-
-    let second_n: (u32, u32) = (
-        (second.0).parse::<u32>().unwrap_or_default(),
-        (second.1).parse::<u32>().unwrap_or_default(),
-    );
-
-    if (first_n.1 < second_n.0) || (first_n.0 > second_n.1) {
-        0
-    } else {
-        1
+    for line in state.into_iter() {
+        for i in 0..count {
+            let c = line.chars().nth((i * 4) + 1).unwrap_or_default();
+            if c != ' ' {
+                stacks[i].push(c);
+            }
+        }
     }
+
+    let moves = lines[index..].to_vec();
+    let substrings_to_remove = ["move ", "from ", "to "];
+
+    for line in moves.into_iter() {
+        let line_numbers = substrings_to_remove
+            .iter()
+            .fold(line, |s, &substring| s.replace(substring, ""));
+
+        let mut split_values = line_numbers.split_whitespace();
+
+        let amount: usize = split_values.next().unwrap_or_default().parse().unwrap();
+        let from: usize = split_values.next().unwrap_or_default().parse().unwrap();
+        let to: usize = split_values.next().unwrap_or_default().parse().unwrap();
+
+        // let mut cargo: Vec<char> = stacks[from - 1].iter().rev().take(amount).cloned().collect();
+        let remaining_length: usize = stacks[from - 1].len() - amount;
+        let cargo: Vec<char> = stacks[from - 1].drain(remaining_length..).collect();
+
+        stacks[to - 1].extend(cargo);
+    }
+
+    let result: Vec<char> = stacks
+        .iter()
+        .map(|stack| {
+            let last = stack.clone().pop().unwrap_or_default();
+            last
+        })
+        .collect();
+
+    let message = join(result.iter(), "");
+
+    println!("{:?}", stacks);
+    println!("{:?}", message);
 }
 
 fn read_lines(filename: &str) -> Vec<String> {

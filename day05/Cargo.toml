@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 common = { path = "../common" }
+itertools = "0.10.0"
 
 [[bin]]
 name = "day05"
