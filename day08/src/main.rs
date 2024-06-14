@@ -35,8 +35,6 @@ pub fn main() -> Result<()> {
 
     for i in 1..matrix.len() - 1 {
         for j in 1..matrix[i].len() - 1 {
-            // println!("{}", matrix[i][j]);
-
             // North
             let north_max_height = if i == 1 {
                 matrix[i - 1][j]
@@ -55,7 +53,43 @@ pub fn main() -> Result<()> {
                 if let Some(ref info) = max_heights[i - 1][j - 2] {
                     info.east
                 } else {
-                    panic!("North: Index out of bounds");
+                    panic!("East: Index out of bounds");
+                }
+            };
+
+            // West
+            let west_max_height = if j == matrix.len() - 2 {
+                matrix[i][matrix.len() - 1]
+            } else {
+                if j == 1 {
+                    // Compute the whole row from end to j = 2
+                    for k in (1..(matrix.len() - 2)).rev() {
+                        let temp_west_max_height = if k == max_heights.len() - 1 {
+                            matrix[i][matrix.len() - 1]
+                        } else {
+                            if let Some(ref info) = max_heights[i - 1][k + 1] {
+                                info.west
+                            } else {
+                                panic!("West (temporary): Index out of bounds");
+                            }
+                        };
+
+                        let temp_pos_w_max_height =
+                            cmp::max(temp_west_max_height, matrix[i][k + 1]);
+
+                        max_heights[i - 1][k] = Some(Info {
+                            north: 0,
+                            east: 0,
+                            south: 0,
+                            west: temp_pos_w_max_height,
+                        });
+                    }
+                }
+
+                if let Some(ref info) = max_heights[i - 1][j] {
+                    info.west
+                } else {
+                    panic!("West: Index out of bounds");
                 }
             };
 
@@ -72,8 +106,18 @@ pub fn main() -> Result<()> {
                     south: 0,
                     west: 0,
                 });
-            }
+            };
+
+            println!(
+                "{} | N: {}, E: {}, W: {}",
+                matrix[i][j],
+                north_max_height < matrix[i][j],
+                east_max_height < matrix[i][j],
+                west_max_height < matrix[i][j]
+            );
         }
+
+        println!();
     }
 
     for row in &max_heights {
