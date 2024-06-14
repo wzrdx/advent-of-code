@@ -30,8 +30,7 @@ pub fn main() -> Result<()> {
     let mut max_heights: Vec<Vec<Option<Info>>> =
         vec![vec![None; matrix.len() - 2]; matrix.len() - 2];
 
-    // let edge_trees = (matrix.len() - 1) * 4;
-    // println!("Edge trees: {:?}", edge_trees);
+    let mut visible_trees = 0;
 
     for i in 1..matrix.len() - 1 {
         for j in 1..matrix[i].len() - 1 {
@@ -54,6 +53,42 @@ pub fn main() -> Result<()> {
                     info.east
                 } else {
                     panic!("East: Index out of bounds");
+                }
+            };
+
+            // South
+            let south_max_height = if i == matrix.len() - 2 {
+                matrix[matrix.len() - 1][j]
+            } else {
+                if i == 1 {
+                    // Compute the whole column from end to i = 2
+                    for k in (1..(matrix.len() - 2)).rev() {
+                        let temp_south_max_height = if k == max_heights.len() - 1 {
+                            matrix[matrix.len() - 1][j]
+                        } else {
+                            if let Some(ref info) = max_heights[k + 1][j - 1] {
+                                info.south
+                            } else {
+                                panic!("South (temporary): Index out of bounds");
+                            }
+                        };
+
+                        let temp_pos_s_max_height =
+                            cmp::max(temp_south_max_height, matrix[k + 1][j]);
+
+                        max_heights[k][j - 1] = Some(Info {
+                            north: 0,
+                            east: 0,
+                            south: temp_pos_s_max_height,
+                            west: 0,
+                        });
+                    }
+                }
+
+                if let Some(ref info) = max_heights[i][j - 1] {
+                    info.south
+                } else {
+                    panic!("South: Index out of bounds");
                 }
             };
 
@@ -108,25 +143,18 @@ pub fn main() -> Result<()> {
                 });
             };
 
-            println!(
-                "{} | N: {}, E: {}, W: {}",
-                matrix[i][j],
-                north_max_height < matrix[i][j],
-                east_max_height < matrix[i][j],
-                west_max_height < matrix[i][j]
-            );
+            if north_max_height < matrix[i][j]
+                || east_max_height < matrix[i][j]
+                || west_max_height < matrix[i][j]
+                || south_max_height < matrix[i][j]
+            {
+                visible_trees += 1;
+            }
         }
-
-        println!();
     }
 
-    for row in &max_heights {
-        for elem in row {
-            print!("{:?} ", elem);
-        }
-
-        println!();
-    }
+    let edge_trees = (matrix.len() - 1) * 4;
+    println!("{:?}", visible_trees + edge_trees);
 
     Ok(())
 }
