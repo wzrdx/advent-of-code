@@ -8,4 +8,4 @@ common = { path = "../common" }
 
 [[bin]]
 name = "day08"
-path = "src/main.rs"
+path = "src/main-2.rs"

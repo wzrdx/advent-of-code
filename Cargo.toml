@@ -16,4 +16,4 @@ atoi = "2"
 
 [[bin]]
 name = "default"
-path = "day08/src/main.rs"
+path = "day08/src/main-2.rs"
