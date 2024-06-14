@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Result};
 
@@ -26,15 +27,11 @@ pub fn main() -> Result<()> {
         for j in 1..(size - 1) {
             let current = matrix[i][j];
 
-            println!("Current: {:?}", current);
-
             let south = ((i + 1)..size)
                 .map(|k| matrix[k][j])
                 .position(|n| n >= current)
                 .unwrap_or_else(|| size - 2 - i)
                 + 1;
-
-            println!("South: {:?}", south);
 
             let north = (0..i)
                 .rev()
@@ -43,8 +40,6 @@ pub fn main() -> Result<()> {
                 .unwrap_or_else(|| i - 1)
                 + 1;
 
-            println!("North: {:?}", north);
-
             let west = (0..j)
                 .rev()
                 .map(|k| matrix[i][k])
@@ -52,19 +47,17 @@ pub fn main() -> Result<()> {
                 .unwrap_or_else(|| j - 1)
                 + 1;
 
-            println!("West: {:?}", west);
-
             let east = ((j + 1)..size)
                 .map(|k| matrix[i][k])
                 .position(|n| n >= current)
                 .unwrap_or_else(|| size - 2 - j)
                 + 1;
 
-            println!("East: {:?}", east);
-
-            println!();
+            max = cmp::max(max, south * north * west * east);
         }
     }
+
+    println!("Max {:?}", max);
 
     Ok(())
 }
