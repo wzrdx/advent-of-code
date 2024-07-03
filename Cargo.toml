@@ -1,5 +1,5 @@
 [workspace]
-members = ["common", "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08"]
+members = ["common", "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day09"]
 
 [package]
 name = "advent-of-code"
@@ -16,4 +16,4 @@ atoi = "2"
 
 [[bin]]
 name = "default"
-path = "day08/src/main-2.rs"
+path = "day09/src/main.rs"
