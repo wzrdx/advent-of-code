@@ -33,6 +33,12 @@ impl Point {
         Self { x, y }
     }
 
+    fn is_adjacent(&self, other: &Self) -> bool {
+        let x_diff = (self.x - other.x).abs();
+        let y_diff = (self.y - other.y).abs();
+        x_diff <= 1 && y_diff <= 1
+    }
+
     fn shift(&mut self, direction: &Direction) {
         match direction {
             Direction::Up => self.y += 1,
@@ -42,43 +48,48 @@ impl Point {
         }
     }
 
-    fn is_adjacent(&self, other: &Self) -> bool {
-        let x_diff = (self.x - other.x).abs();
-        let y_diff = (self.y - other.y).abs();
-        x_diff <= 1 && y_diff <= 1
+    fn follow(&mut self, other: &Point) {
+        if self.y == other.y {
+            self.x += if self.x < other.x { 1 } else { -1 };
+        } else if self.x == other.x {
+            self.y += if self.y < other.y { 1 } else { -1 };
+        } else {
+            self.x += if self.x < other.x { 1 } else { -1 };
+            self.y += if self.y < other.y { 1 } else { -1 };
+        }
     }
 }
 
 #[derive(Debug)]
 struct Tail {
-    position: Point,
+    points: [Point; 9],
     visited: HashSet<Point>,
 }
 
 impl Tail {
     fn new() -> Self {
         let position = Point::new(0, 0);
+        let points = [position; 9];
+
         let mut visited = HashSet::new();
         visited.insert(position);
 
-        Self { position, visited }
+        Self { points, visited }
     }
 
-    fn follow(&mut self, other: &Point) {
-        if self.position.is_adjacent(other) {
-            return;
+    fn follow(&mut self, head: &Point) {
+        let mut leader = *head;
+        for i in 0..9 {
+            if self.points[i].is_adjacent(&leader) {
+                // Break early because the tail doesn't move
+                return;
+            }
+
+            self.points[i].follow(&leader);
+            leader = self.points[i];
         }
 
-        if self.position.y == other.y {
-            self.position.x += if self.position.x < other.x { 1 } else { -1 };
-        } else if self.position.x == other.x {
-            self.position.y += if self.position.y < other.y { 1 } else { -1 };
-        } else {
-            self.position.x += if self.position.x < other.x { 1 } else { -1 };
-            self.position.y += if self.position.y < other.y { 1 } else { -1 };
-        }
-
-        self.visited.insert(self.position);
+        self.visited.insert(self.points[8]);
     }
 }
 
