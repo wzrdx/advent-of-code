@@ -6,7 +6,7 @@ use common::{first_and_last, read_lines};
 pub fn main() {
     let lines: Vec<String> = read_lines("day10/input.txt");
 
-    // let mut x: u16 = 1;
+    let mut x: i16 = 1;
     let mut cycle: u8 = 1;
     let mut index: u16 = 0;
 
@@ -25,33 +25,41 @@ pub fn main() {
         .collect();
 
     let mut queue: Option<i16> = None;
+    let mut pixels: Vec<char> = vec!['.'; 240];
 
-    while index < array.len() as u16 {
+    while cycle <= 240 && index < array.len() as u16 {
+        // Handle drawing the pixels first, process instructions afterwards.
+        let position = cycle - 1;
+
+        if should_draw(x, position as i16) {
+            pixels[position as usize] = '#';
+        }
+
         let value = array[index as usize];
 
         if queue.is_none() {
-            let instr_str = if value == 0 {
-                "noop".to_string()
-            } else {
-                format!("addx {}", value)
-            };
-
-            println!("[{:?}] Starting: {:?}", cycle, instr_str);
+            // Parse the next instruction.
+            // If it's an 'addx' add it to the queue to be processed in the next cycle.
+            if value != 0 {
+                queue = Some(value);
+            }
 
             index += 1;
         } else {
-            println!(
-                "[{:?}] Finished: {:?}",
-                cycle,
-                format!("addx {}", queue.unwrap())
-            );
+            // Finish processing the 'addx' instruction from the queue.
+            x += queue.unwrap();
             queue = None;
-        }
-
-        if value != 0 {
-            queue = Some(value);
         }
 
         cycle += 1;
     }
+
+    for row in pixels.chunks(40) {
+        println!("{}", row.iter().collect::<String>());
+    }
+}
+
+fn should_draw(x: i16, position: i16) -> bool {
+    let position_mod = position % 40;
+    position_mod >= x - 1 && position_mod <= x + 1
 }
