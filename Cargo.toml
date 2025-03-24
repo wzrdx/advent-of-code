@@ -1,5 +1,5 @@
 [workspace]
-members = ["common", "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day09", "day10"]
+members = ["common", "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day09", "day10", "day11"]
 
 [package]
 name = "advent-of-code"
@@ -13,7 +13,8 @@ itertools = "0.10.0"
 maplit = "1.0"
 lazy_static = "1.4"
 atoi = "2"
+prettytable = "0.10.0"
 
 [[bin]]
 name = "default"
-path = "day10/src/main.rs"
+path = "day11/src/main.rs"
