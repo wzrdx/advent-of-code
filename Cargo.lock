@@ -146,6 +146,14 @@ name = "day11"
 version = "0.1.0"
 dependencies = [
  "common",
+ "prettytable",
+]
+
+[[package]]
+name = "day12"
+version = "0.1.0"
+dependencies = [
+ "common",
 ]
 
 [[package]]
