@@ -16,7 +16,7 @@ pub fn main() {
     let width = lines[0].len() as u8;
     let height = lines.len() as u8;
 
-    let matrix = Matrix {
+    let mut matrix = Matrix {
         lines,
         width,
         height,
@@ -35,7 +35,7 @@ pub fn main() {
     while !queue.is_empty() {
         position = queue.pop_front().unwrap();
 
-        if get_char(position, &matrix.lines) == 'E' {
+        if get_char(position, &matrix.lines) == 'a' {
             println!("Found the target at {:?}", position);
             break;
         }
@@ -55,8 +55,16 @@ pub fn main() {
 
     // Reconstruct path
     while position != starting_position {
+        matrix.lines[position.1 as usize]
+            .replace_range(position.0 as usize..position.0 as usize + 1, "#");
+
         position = came_from[&position];
+
         moves += 1;
+    }
+
+    for line in matrix.lines {
+        println!("{}", line);
     }
 
     println!("Moves {:?}", moves);
@@ -65,7 +73,13 @@ pub fn main() {
 fn get_visitable_neighbors(position: (u8, u8), matrix: &Matrix) -> Vec<(u8, u8)> {
     let (x, y) = position;
     let char = get_char(position, &matrix.lines);
-    let value: u8 = if char == 'S' { 'a' as u8 } else { char as u8 };
+    let value: u8 = if char == 'S' {
+        'a' as u8
+    } else if char == 'E' {
+        'z' as u8
+    } else {
+        char as u8
+    };
 
     let mut neighbors = Vec::new();
 
@@ -100,14 +114,16 @@ fn get_visitable_neighbors(position: (u8, u8), matrix: &Matrix) -> Vec<(u8, u8)>
 }
 
 fn check_neighbor(position: (u8, u8), value: u8, lines: &Vec<String>) -> bool {
-    let char = get_char(position, lines);
-    let neighbor_value: u8 = if char == 'E' { 'z' as u8 } else { char as u8 };
-
-    if neighbor_value < value {
-        true
+    let neighbor_char = get_char(position, lines);
+    let neighbor_value: u8 = if neighbor_char == 'S' {
+        'a' as u8
+    } else if neighbor_char == 'E' {
+        'z' as u8
     } else {
-        neighbor_value - value <= 1
-    }
+        neighbor_char as u8
+    };
+
+    (value >= neighbor_value && value - neighbor_value <= 1) || value < neighbor_value
 }
 
 fn get_char(position: (u8, u8), lines: &Vec<String>) -> char {
@@ -120,7 +136,7 @@ fn get_char(position: (u8, u8), lines: &Vec<String>) -> char {
 fn find_starting_position(lines: &Vec<String>) -> (u8, u8) {
     for (y, line) in lines.iter().enumerate() {
         for (x, char) in line.chars().enumerate() {
-            if char == 'S' {
+            if char == 'E' {
                 return (x as u8, y as u8);
             }
         }
