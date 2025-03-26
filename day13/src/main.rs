@@ -1,42 +1,47 @@
+use common::read_lines;
 use serde_json::{self, Value};
-use std::{cmp::min, fs::read_to_string};
-
-const EMPTY_LINE: &str = "\n\n";
+use std::cmp::min;
 
 // Day #13
 pub fn main() {
-    let content = read_to_string("day13/input.txt").unwrap();
+    let mut lines: Vec<Value> = read_lines("day13/input.txt")
+        .into_iter()
+        .filter(|line| !line.trim().is_empty())
+        .map(|line| serde_json::from_str(&line).expect("Failed to parse JSON"))
+        .collect();
 
-    let pairs = content
-        .split(EMPTY_LINE)
-        .map(|block| {
-            let lines: Vec<&str> = block.lines().collect();
-            [lines[0], lines[1]]
-        })
-        .collect::<Vec<[&str; 2]>>();
+    // Add divider packets
+    let divider_1_str: String = "[[2]]".to_owned();
+    let divider_2_str: String = "[[6]]".to_owned();
 
-    let mut pairs_in_order: Vec<usize> = Vec::new();
+    let divider_1_value = serde_json::from_str(divider_1_str.as_str()).unwrap();
+    let divider_2_value = serde_json::from_str(divider_2_str.as_str()).unwrap();
 
-    for (i, pair) in pairs.iter().enumerate() {
-        let left: Value = serde_json::from_str(pair[0]).expect("Failed to parse left value.");
-        let right: Value = serde_json::from_str(pair[1]).expect("Failed to parse right value.");
+    lines.push(divider_1_value);
+    lines.push(divider_2_value);
 
-        let left_array: Vec<Value> = match &left {
-            Value::Array(arr) => arr.to_vec(),
-            _ => panic!("Left value is not an array."),
-        };
+    lines.sort_by(|a, b| {
+        let result = compare(a, b);
+        if result > 0 {
+            std::cmp::Ordering::Less
+        } else if result < 0 {
+            std::cmp::Ordering::Greater
+        } else {
+            std::cmp::Ordering::Equal
+        }
+    });
 
-        let right_array: Vec<Value> = match &right {
-            Value::Array(arr) => arr.to_vec(),
-            _ => panic!("Right value is not an array."),
-        };
+    let mut indices = Vec::new();
 
-        if compare_array(&left_array, &right_array) > 0 {
-            pairs_in_order.push(i + 1);
+    for (i, value) in lines.iter().enumerate() {
+        let value_str = serde_json::to_string(value).unwrap();
+
+        if value_str == divider_1_str || value_str == divider_2_str {
+            indices.push(i + 1);
         }
     }
 
-    println!("Result: {:?}", pairs_in_order.iter().sum::<usize>());
+    println!("Decoder key: {}", indices.iter().product::<usize>());
 }
 
 fn compare(left: &Value, right: &Value) -> i16 {
