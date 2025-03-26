@@ -18,47 +18,25 @@ pub fn main() {
     let mut pairs_in_order: Vec<usize> = Vec::new();
 
     for (i, pair) in pairs.iter().enumerate() {
-        let result = check_pair(*pair);
+        let left: Value = serde_json::from_str(pair[0]).expect("Failed to parse left value.");
+        let right: Value = serde_json::from_str(pair[1]).expect("Failed to parse right value.");
 
-        if result > 0 {
+        let left_array: Vec<Value> = match &left {
+            Value::Array(arr) => arr.to_vec(),
+            _ => panic!("Left value is not an array."),
+        };
+
+        let right_array: Vec<Value> = match &right {
+            Value::Array(arr) => arr.to_vec(),
+            _ => panic!("Right value is not an array."),
+        };
+
+        if compare_array(&left_array, &right_array) > 0 {
             pairs_in_order.push(i + 1);
         }
     }
 
     println!("Result: {:?}", pairs_in_order.iter().sum::<usize>());
-}
-
-fn check_pair(pair: [&str; 2]) -> i16 {
-    let left: Value = serde_json::from_str(pair[0]).expect("Failed to parse left value.");
-    let right: Value = serde_json::from_str(pair[1]).expect("Failed to parse right value.");
-
-    let left_array: Vec<Value> = match &left {
-        Value::Array(arr) => arr.to_vec(),
-        _ => panic!("Left value is not an array."),
-    };
-
-    let right_array: Vec<Value> = match &right {
-        Value::Array(arr) => arr.to_vec(),
-        _ => panic!("Right value is not an array."),
-    };
-
-    let max_length = min(left_array.len(), right_array.len());
-
-    let mut index = 0;
-    let mut result = 0;
-
-    while index < max_length && result == 0 {
-        result = compare(&left, &right);
-        index += 1;
-    }
-
-    result = if result == 0 {
-        (right_array.len() as i16) - (left_array.len() as i16)
-    } else {
-        result
-    };
-
-    result
 }
 
 fn compare(left: &Value, right: &Value) -> i16 {
@@ -71,33 +49,41 @@ fn compare(left: &Value, right: &Value) -> i16 {
     }
     // If both are arrays
     else if let (Value::Array(left_array), Value::Array(right_array)) = (&left, &right) {
-        let max_length = min(left_array.len(), right_array.len());
-
-        let mut index = 0;
-        let mut result = 0;
-
-        while index < max_length && result == 0 {
-            result = compare(&left_array[index], &right_array[index]);
-            index += 1;
-        }
-
-        result = if result == 0 {
-            (right_array.len() as i16) - (left_array.len() as i16)
-        } else {
-            result
-        };
-
-        result
+        return compare_array(left_array, right_array);
     } else {
         // If one is an array and one is a number, convert the number to an array and compare
-        if left.is_array() && right.is_number() {
-            let right_as_array = Value::Array(vec![right.clone()]);
-            return compare(left, &right_as_array);
-        } else if left.is_number() && right.is_array() {
-            let left_as_array = Value::Array(vec![left.clone()]);
-            return compare(&left_as_array, right);
+        let left_array = if left.is_number() {
+            Value::Array(vec![left.clone()])
         } else {
-            panic!("Unexpected mixed types.");
-        }
+            left.clone()
+        };
+
+        let right_array = if right.is_number() {
+            Value::Array(vec![right.clone()])
+        } else {
+            right.clone()
+        };
+
+        return compare(&left_array, &right_array);
     }
+}
+
+fn compare_array(left_array: &Vec<Value>, right_array: &Vec<Value>) -> i16 {
+    let max_length = min(left_array.len(), right_array.len());
+
+    let mut index = 0;
+    let mut result = 0;
+
+    while index < max_length && result == 0 {
+        result = compare(&left_array[index], &right_array[index]);
+        index += 1;
+    }
+
+    result = if result == 0 {
+        (right_array.len() as i16) - (left_array.len() as i16)
+    } else {
+        result
+    };
+
+    result
 }
