@@ -46,23 +46,23 @@ pub fn main() {
     let mut cave = Cave::new(1000);
 
     parse_input(lines, &mut cave);
-    // print_cave(&cave, 494, 503, 0, 9);
-    // print_cave(&cave, 475, 550, 0, 165);
 
-    let count = pour_sand(&mut cave);
+    let highest_y: usize = (cave.grid.iter().rposition(|&x| x == 1).unwrap() / cave.size) + 2;
+    println!("Highest y: {}", highest_y);
+
+    let count = pour_sand(&mut cave, highest_y);
     println!("Units: {}", count);
 
-    // print_cave(&cave, 494, 503, 0, 9);
-    // print_cave(&cave, 475, 550, 0, 165);
+    print_cave(&cave, 400, 600, 0, highest_y);
 }
 
-fn pour_sand(cave: &mut Cave) -> usize {
+fn pour_sand(cave: &mut Cave, highest_y: usize) -> usize {
     let mut count = 0;
     let starting_pos = Coords { x: 500, y: 0 };
     let mut coords: Coords = starting_pos.clone();
 
     while coords.y < cave.size - 1 {
-        if let Some(next_coords) = move_sand(&coords, cave) {
+        if let Some(next_coords) = move_sand(&coords, cave, highest_y) {
             coords = next_coords;
         } else {
             cave.set(coords.x, coords.y, Block::Sand);
@@ -79,7 +79,11 @@ fn pour_sand(cave: &mut Cave) -> usize {
     count
 }
 
-fn move_sand(coords: &Coords, cave: &Cave) -> Option<Coords> {
+fn move_sand(coords: &Coords, cave: &Cave, highest_y: usize) -> Option<Coords> {
+    if coords.y + 1 == highest_y {
+        return None;
+    }
+
     if cave.get(coords.x, coords.y + 1) == Block::Air {
         return Some(Coords {
             x: coords.x,
@@ -150,6 +154,11 @@ fn parse_input(lines: Vec<String>, cave: &mut Cave) {
 fn print_cave(cave: &Cave, x_min: usize, x_max: usize, y_min: usize, y_max: usize) {
     for y in y_min..=y_max {
         for x in x_min..=x_max {
+            if y == y_max {
+                print!("#");
+                continue;
+            }
+
             match cave.get(x, y) {
                 Block::Air => print!("."),
                 Block::Wall => print!("#"),
