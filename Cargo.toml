@@ -1,5 +1,5 @@
 [workspace]
-members = ["common", "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day09", "day10", "day11", "day12", "day13", "day14", "day15"]
+members = ["common", "day01", "day02", "day03", "day04", "day05", "day06", "day07", "day08", "day09", "day10", "day11", "day12", "day13", "day14", "day15", "day16"]
 
 [package]
 name = "advent-of-code"
@@ -16,7 +16,8 @@ atoi = "2"
 prettytable = "0.10.0"
 serde_json = "1.0"
 regex = "1.9"
+rand = "0.8"
 
 [[bin]]
 name = "default"
-path = "day15/src/main.rs"
+path = "day16/src/main.rs"
