@@ -1,51 +1,145 @@
-use std::collections::HashMap;
-
 use common::read_lines;
-use rand::seq::SliceRandom;
-use rand::Rng;
 use regex::Regex;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Debug, Clone)]
-struct Valve {
-    flow_rate: u32,
+struct ValveProps {
+    flow_rate: i32,
     connections: Vec<String>,
 }
 
-#[derive(PartialEq)]
-enum Action {
-    Open,
-    Move,
+#[derive(Debug, Clone)]
+struct Valve {
+    props: ValveProps,
+    dist: HashMap<String, i32>,
 }
 
 // Day #16
 pub fn main() {
     let lines: Vec<String> = read_lines("day16/input.txt");
+
+    let mut valve_props: HashMap<String, ValveProps> = HashMap::new();
     let mut valves: HashMap<String, Valve> = HashMap::new();
 
-    lines
-        .iter()
-        .for_each(|line| parse_valve(line.as_str(), &mut valves).expect("Unable to parse line."));
+    for line in lines {
+        let (name, props) = parse_valve(line.as_str()).expect("Unable to parse line.");
+        valve_props.insert(name, props);
+    }
 
-    let mut max_pressure: u32 = 0;
-    let mut max_path: Vec<String> = Vec::new();
+    for name in valve_props.keys() {
+        let dist = bfs(name, &valve_props);
 
-    for _ in 0..10_000 {
-        let (pressure, path) = find_path(&valves);
+        valves.insert(
+            name.clone(),
+            Valve {
+                props: valve_props[name].clone(),
+                dist,
+            },
+        );
+    }
 
-        if pressure > max_pressure {
-            max_pressure = pressure;
-            max_path = path;
+    find_path(&valves);
+}
+
+fn bfs(start: &String, valve_props: &HashMap<String, ValveProps>) -> HashMap<String, i32> {
+    let mut dist: HashMap<String, i32> = HashMap::new();
+    let mut queue: VecDeque<String> = VecDeque::new();
+    let mut current: String;
+
+    dist.insert(start.clone(), 0);
+    queue.push_back(start.clone());
+
+    while !queue.is_empty() {
+        current = queue.pop_front().unwrap();
+
+        for neighbor in valve_props[&current].connections.iter() {
+            if !dist.contains_key(neighbor) {
+                dist.insert(neighbor.clone(), dist[&current] + 1);
+                queue.push_back(neighbor.clone());
+            }
         }
     }
 
-    println!("{:?}", max_pressure);
-
-    for action in max_path {
-        println!("{}", action);
-    }
+    dist
 }
 
-fn parse_valve(line: &str, valves: &mut HashMap<String, Valve>) -> Result<(), String> {
+fn find_path(valves: &HashMap<String, Valve>) {
+    let mut open_valves: Vec<String> = Vec::new();
+    let useful_valves = valves
+        .iter()
+        .filter(|(_, v)| v.props.flow_rate > 0)
+        .map(|(k, _)| k.clone())
+        .collect::<Vec<String>>();
+
+    let mut memo: HashMap<String, i32> = HashMap::new();
+
+    let total_pressure = dfs(
+        &"AA".to_string(),
+        30,
+        &mut open_valves,
+        &useful_valves,
+        &mut memo,
+        &valves,
+    );
+
+    println!("Total pressure: {}", total_pressure);
+}
+
+fn dfs(
+    current_valve: &String,
+    minutes_left: i32,
+    open_valves: &mut Vec<String>,
+    useful_valves: &Vec<String>,
+    memo: &mut HashMap<String, i32>,
+    valves: &HashMap<String, Valve>,
+) -> i32 {
+    let mut sorted_open = open_valves.clone();
+    sorted_open.sort();
+    let key = format!(
+        "{}-{}-{}",
+        current_valve,
+        minutes_left,
+        sorted_open.join(",")
+    );
+
+    if memo.contains_key(key.as_str()) {
+        return memo[key.as_str()];
+    }
+
+    let mut best: i32 = 0;
+
+    for valve in useful_valves {
+        if open_valves.contains(valve) {
+            continue;
+        }
+
+        let distance = valves[current_valve].dist[valve] as i32;
+        let time_left: i32 = minutes_left - distance - 1;
+
+        if time_left <= 0 {
+            continue;
+        }
+
+        let flow_rate = valves[valve].props.flow_rate;
+        let pressure_released = flow_rate * time_left;
+
+        // Try to see if the result is satisfying by opening the valve
+        open_valves.push(valve.clone());
+
+        let total_pressure =
+            pressure_released + dfs(valve, time_left, open_valves, useful_valves, memo, valves);
+
+        open_valves.pop(); // Undo that choice before trying the next valve
+
+        best = best.max(total_pressure);
+    }
+
+    memo.insert(key.clone(), best);
+
+    best
+}
+
+fn parse_valve(line: &str) -> Result<(String, ValveProps), String> {
     let regex = Regex::new(r"Valve (\w+) has flow rate=(\d+); tunnels? leads? to valves? (.+)")
         .map_err(|e| format!("Invalid regex: {}.", e))?;
 
@@ -63,7 +157,7 @@ fn parse_valve(line: &str, valves: &mut HashMap<String, Valve>) -> Result<(), St
         .get(2)
         .ok_or("Missing flow rate.")?
         .as_str()
-        .parse::<u32>()
+        .parse::<i32>()
         .map_err(|e| format!("Invalid flow rate: {}.", e))?;
 
     let connections = captures
@@ -74,68 +168,11 @@ fn parse_valve(line: &str, valves: &mut HashMap<String, Valve>) -> Result<(), St
         .map(|s| s.to_string())
         .collect::<Vec<_>>();
 
-    valves.insert(
+    Ok((
         name,
-        Valve {
+        ValveProps {
             flow_rate,
             connections,
         },
-    );
-
-    Ok(())
-}
-
-fn find_path(valves: &HashMap<String, Valve>) -> (u32, Vec<String>) {
-    let mut open_valves: Vec<String> = Vec::new();
-    let mut minutes_left: u32 = 30;
-    let mut pressure_released: u32 = 0;
-    let mut current_valve: String = "AA".to_string();
-
-    let mut moves: Vec<String> = Vec::new();
-
-    while minutes_left > 0 {
-        minutes_left -= 1;
-
-        let valve = valves
-            .get(&current_valve)
-            .expect("Valve not found in the map.");
-
-        let action = if valve.flow_rate == 0 || open_valves.contains(&current_valve) {
-            Action::Move
-        } else {
-            if rand::thread_rng().gen_bool(0.5) {
-                Action::Open
-            } else {
-                Action::Move
-            }
-        };
-
-        if action == Action::Open {
-            open_valves.push(current_valve.clone());
-            pressure_released += valve.flow_rate * minutes_left;
-
-            moves.push(format!(
-                "[Minute {}] Open {} which will release {} pressure.",
-                (minutes_left).abs_diff(30),
-                current_valve,
-                valve.flow_rate * minutes_left
-            ));
-        } else {
-            let next_valve = valve
-                .connections
-                .choose(&mut rand::thread_rng())
-                .expect("No connections available.")
-                .clone();
-
-            current_valve = next_valve;
-
-            moves.push(format!(
-                "[Minute {}] Move to {}.",
-                (minutes_left).abs_diff(30),
-                current_valve
-            ));
-        }
-    }
-
-    (pressure_released, moves)
+    ))
 }
